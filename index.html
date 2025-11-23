@@ -5,9 +5,17 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Three.js Toon Shader Demo</title>
     <style>
-      body { margin: 0; overflow: hidden; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #333; }
-      #canvas-container { width: 100vw; height: 100vh; display: block; }
-      
+      body {
+        margin: 0;
+        overflow: hidden;
+        font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+        background: #333;
+      }
+      #canvas-container {
+        width: 100vw;
+        height: 100vh;
+        display: block;
+      }
       /* UI Overlay */
       #ui-panel {
         position: absolute;
@@ -18,22 +26,37 @@
         border-radius: 12px;
         color: white;
         border: 1px solid #555;
-        box-shadow: 0 4px 15px rgba(0,0,0,0.5);
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.5);
         display: flex;
         flex-direction: column;
         gap: 15px;
         min-width: 240px;
         backdrop-filter: blur(5px);
-        max-height: 90vh; /* Safety for small screens */
+        max-height: 90vh;
         overflow-y: auto;
+        z-index: 100; /* Ensure UI stays above the loader/canvas */
       }
 
-      h1 { margin: 0 0 5px 0; font-size: 1.2rem; color: #ffcc00; }
-      p { margin: 0; font-size: 0.85rem; color: #ccc; }
+      h1 {
+        margin: 0 0 5px 0;
+        font-size: 1.2rem;
+        color: #ffcc00;
+      }
+      p {
+        margin: 0;
+        font-size: 0.85rem;
+        color: #ccc;
+      }
 
-      label { font-size: 0.9rem; font-weight: bold; display: block; margin-bottom: 5px; }
-      
-      select, button {
+      label {
+        font-size: 0.9rem;
+        font-weight: bold;
+        display: block;
+        margin-bottom: 5px;
+      }
+
+      select,
+      button {
         width: 100%;
         padding: 10px;
         border-radius: 6px;
@@ -43,8 +66,12 @@
         outline: none;
       }
 
-      select { background: #444; color: white; border: 1px solid #666; }
-      
+      select {
+        background: #444;
+        color: white;
+        border: 1px solid #666;
+      }
+
       button {
         background: #ffcc00;
         color: #222;
@@ -52,7 +79,9 @@
         transition: background 0.2s;
         margin-bottom: 10px;
       }
-      button:hover { background: #e6b800; }
+      button:hover {
+        background: #e6b800;
+      }
 
       /* Slider Styling */
       .control-group {
@@ -60,8 +89,11 @@
         padding: 10px;
         border-radius: 6px;
       }
-      
-      input[type=range] { width: 100%; cursor: pointer; }
+
+      input[type="range"] {
+        width: 100%;
+        cursor: pointer;
+      }
 
       .checkbox-row {
         display: flex;
@@ -69,17 +101,20 @@
         gap: 10px;
         font-size: 0.9rem;
       }
-      input[type=checkbox] { transform: scale(1.2); cursor: pointer; }
+      input[type="checkbox"] {
+        transform: scale(1.2);
+        cursor: pointer;
+      }
 
-      /* --- NEW: File Upload Styling --- */
+      /* File Upload Styling */
       .upload-btn-wrapper {
         position: relative;
         overflow: hidden;
         display: inline-block;
         width: 100%;
       }
-      
-      .upload-btn-wrapper input[type=file] {
+
+      .upload-btn-wrapper input[type="file"] {
         font-size: 100px;
         position: absolute;
         left: 0;
@@ -95,12 +130,74 @@
         padding: 8px 20px;
         font-weight: bold;
       }
-      .btn-upload:hover { border-color: #ffcc00; color: #ffcc00; }
-      
-      hr { border: 0; border-top: 1px solid #555; width: 100%; margin: 0; }
+      .btn-upload:hover {
+        border-color: #ffcc00;
+        color: #ffcc00;
+      }
+
+      hr {
+        border: 0;
+        border-top: 1px solid #555;
+        width: 100%;
+        margin: 0;
+      }
+
+      /* --- Loading Overlay --- */
+      #loading-overlay {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.6);
+        backdrop-filter: blur(4px);
+        z-index: 50; /* Above canvas, below UI panel */
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        transition: opacity 0.3s ease;
+        pointer-events: all;
+      }
+
+      #loading-overlay.hidden {
+        opacity: 0;
+        pointer-events: none;
+      }
+
+      .spinner {
+        width: 50px;
+        height: 50px;
+        border: 5px solid rgba(255, 255, 255, 0.1);
+        border-top: 5px solid #ffcc00;
+        border-radius: 50%;
+        animation: spin 1s linear infinite;
+        margin-bottom: 15px;
+      }
+
+      .loading-text {
+        color: #ffcc00;
+        font-weight: bold;
+        letter-spacing: 1px;
+        text-transform: uppercase;
+      }
+
+      @keyframes spin {
+        0% {
+          transform: rotate(0deg);
+        }
+        100% {
+          transform: rotate(360deg);
+        }
+      }
     </style>
   </head>
   <body>
+    <!-- Loading Overlay -->
+    <div id="loading-overlay" class="hidden">
+      <div class="spinner"></div>
+      <div class="loading-text">Loading Model...</div>
+    </div>
     <div id="ui-panel">
       <div>
         <h1>Toon Shader</h1>
@@ -111,25 +208,34 @@
       <div>
         <label for="model-select">Select Model:</label>
         <select id="model-select">
+          <option value="car.glb">Car</option>
           <option value="tree.glb">Tree</option>
           <option value="character.glb">Character</option>
           <option value="prop.glb">Prop</option>
-          <!-- Dynamic "Custom" option will appear here via JS if needed -->
         </select>
       </div>
 
       <div class="control-group">
         <label for="rotation-slider">Object Rotation:</label>
-        <input type="range" id="rotation-slider" min="0" max="6.28" step="0.01" value="0">
-        <div class="checkbox-row" style="margin-top: 10px;">
-          <input type="checkbox" id="auto-rotate" checked>
-          <label for="auto-rotate" style="margin:0; font-weight:normal;">Auto-spin</label>
+        <input
+          type="range"
+          id="rotation-slider"
+          min="0"
+          max="6.28"
+          step="0.01"
+          value="0"
+        />
+        <div class="checkbox-row" style="margin-top: 10px">
+          <input type="checkbox" id="auto-rotate" checked />
+          <label for="auto-rotate" style="margin: 0; font-weight: normal"
+            >Auto-spin</label
+          >
         </div>
       </div>
 
       <hr />
 
-      <!-- NEW: File Uploader -->
+      <!-- File Uploader -->
       <div>
         <label>Custom Upload (.glb/.gltf)</label>
         <div class="upload-btn-wrapper">

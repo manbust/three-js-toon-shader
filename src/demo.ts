@@ -18,6 +18,9 @@ let isAutoRotating = true;
 
 // 1. Setup Scene
 const container = document.getElementById('canvas-container') as HTMLElement;
+// NEW: Select the loader element early so functions can use it
+const loaderEl = document.getElementById('loading-overlay') as HTMLElement;
+
 const scene = new THREE.Scene();
 scene.background = new THREE.Color(0x888888); 
 
@@ -111,6 +114,9 @@ function processModel(rawModel: THREE.Group): THREE.Group {
 function loadModel(urlOrFilename: string, isCustomUpload: boolean = false) {
   const finalPath = isCustomUpload ? urlOrFilename : `${ASSET_PATH}${urlOrFilename}`;
   
+  // SHOW LOADER
+  if (loaderEl) loaderEl.classList.remove('hidden');
+
   // Cleanup
   if (currentModel) {
     scene.remove(currentModel);
@@ -158,11 +164,17 @@ function loadModel(urlOrFilename: string, isCustomUpload: boolean = false) {
       }
 
       updateMaterialState();
+
+      // HIDE LOADER - Success
+      if (loaderEl) loaderEl.classList.add('hidden');
     }, 
     undefined, 
     (err) => {
       console.error(err);
       alert("Error loading model. Check console.");
+      
+      // HIDE LOADER - Error
+      if (loaderEl) loaderEl.classList.add('hidden');
     }
   );
 }
