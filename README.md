@@ -21,3 +21,12 @@ This project relies on `three` as a peer dependency.
 npm install three
 # or
 yarn add three
+```
+
+## Running the Demo
+
+1. Clone the repository.
+2. Install dependencies:
+   ```bash
+   npm install
+   ```
